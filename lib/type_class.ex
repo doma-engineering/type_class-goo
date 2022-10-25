@@ -142,7 +142,7 @@ defmodule TypeClass do
         use TypeClass.Dependency
 
         Module.register_attribute(__MODULE__, :force_type_class, [])
-        @force_type_class false
+        @force_type_class Application.fetch_env!(:type_class, :skip_check_props?)
 
         Module.register_attribute(__MODULE__, :class_methods, [])
         @class_methods false

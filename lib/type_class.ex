@@ -141,8 +141,22 @@ defmodule TypeClass do
 
         use TypeClass.Dependency
 
+        force_default = fn ->
+          high_prio = case System.get_env("FORCE_TYPE_CLASS") do
+            nil -> nil
+            "false" -> false
+            _ -> true
+          end
+          low_prio = Application.compile_env(:doma_type_class, :force_type_class, true) # Friendship ended with false, now true is my best friend
+          if is_nil(high_prio) do
+            low_prio
+          else
+            high_prio
+          end
+        end
+
         Module.register_attribute(__MODULE__, :force_type_class, [])
-        @force_type_class Application.compile_env(:type_class, :skip_check_props?)
+        @force_type_class force_default.()
 
         Module.register_attribute(__MODULE__, :class_methods, [])
         @class_methods false

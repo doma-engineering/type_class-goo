@@ -269,15 +269,21 @@ defmodule TypeClass do
         def __force_type_instance__, do: @force_type_instance
       end
 
-      print_warnings = case System.get_env("PRINT_WARNINGS") do
+      high_prio = case System.get_env("NOWARN_FORCED_TYPE_CLASS") do
         nil -> nil
         "false" -> false
         _ -> true
       end
+      low_prio = Application.compile_env(:doma_type_class, :nowarn_force_type_class, true)
+      nowarn_force_default_const = if is_nil(high_prio) do
+        if low_prio, do: true, else: false
+      else
+        high_prio
+      end
 
       cond do
         unquote(class).__force_type_class__() ->
-          if print_warnings do
+          unless nowarn_force_default_const do
             IO.warn("""
             The type class #{unquote(class)} has been forced to bypass \
             all property checks for all data types. This is very rarely valid, \
@@ -291,7 +297,7 @@ defmodule TypeClass do
           :ok
 
         instance.__force_type_instance__() ->
-          if print_warnings do
+          unless nowarn_force_default_const do
             IO.warn("""
             The data type #{unquote(datatype)} has been forced to skip property \
             validation for the type class #{unquote(class)}

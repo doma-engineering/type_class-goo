@@ -73,7 +73,11 @@ This will force the prop checker to pass for all data types for the class.
 This is generally a bad idea (see section on principled classes above),
 but may be nessesary for some extreme edge cases.
 
-Using this option will trigger a compile time warning. See [`defclass/2`](TypeClass.html#defclass/2) on how to use.
+### We skip compile time prop checks for dev environment in doma family of repos
+Just not to confuse new developers with too many warnings.
+Once you want to check all props _(you really want to before moving to production)_ you can enable the default behaviour of compile time checks by passing `FORCE_TYPE_CLASS=false` environment variable to `mix compile` task.
+
+To show this compile time warnings pass `PRINT_WARNINGS=true` flag to `mix compile` command. See [`defclass/2`](TypeClass.html#defclass/2) on how to use.
 
 ### `@force_type_instance true`
 This will force the prop checker to pass for a particular instance.

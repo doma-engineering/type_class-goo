@@ -268,32 +268,44 @@ defmodule TypeClass do
         def __force_type_instance__, do: @force_type_instance
       end
 
+      print_warnings = case System.get_env("PRINT_WARNINGS") do
+        nil -> nil
+        "false" -> false
+        _ -> true
+      end
+
       cond do
         unquote(class).__force_type_class__() ->
-          # IO.warn("""
-          # The type class #{unquote(class)} has been forced to bypass \
-          # all property checks for all data types. This is very rarely valid, \
-          # as all type classes should have properties associted with them.
+          if print_warnings do
+            IO.warn("""
+            The type class #{unquote(class)} has been forced to bypass \
+            all property checks for all data types. This is very rarely valid, \
+            as all type classes should have properties associted with them.
+  
+            For more, please see the TypeClass README:
+            https://github.com/expede/type_class/blob/master/README.md
+            """)
+          end
 
-          # For more, please see the TypeClass README:
-          # https://github.com/expede/type_class/blob/master/README.md
-          # """)
           :ok
 
         instance.__force_type_instance__() ->
-          # IO.warn("""
-          # The data type #{unquote(datatype)} has been forced to skip property \
-          # validation for the type class #{unquote(class)}
+          if print_warnings do
+            IO.warn("""
+            The data type #{unquote(datatype)} has been forced to skip property \
+            validation for the type class #{unquote(class)}
+  
+            This is sometimes valid, since TypeClass's property checker \
+            may not be able to accurately validate all data types correctly for \
+            all possible cases. Forcing a type instance in this way is like telling \
+            the checker "trust me this is correct", and should only be used as \
+            a last resort.
+  
+            For more, please see the TypeClass README:
+            https://github.com/expede/type_class/blob/master/README.md
+            """)
+          end
 
-          # This is sometimes valid, since TypeClass's property checker \
-          # may not be able to accurately validate all data types correctly for \
-          # all possible cases. Forcing a type instance in this way is like telling \
-          # the checker "trust me this is correct", and should only be used as \
-          # a last resort.
-
-          # For more, please see the TypeClass README:
-          # https://github.com/expede/type_class/blob/master/README.md
-          # """)
           :ok
 
         true ->

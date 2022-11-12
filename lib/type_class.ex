@@ -141,7 +141,8 @@ defmodule TypeClass do
 
         use TypeClass.Dependency
 
-				# @doc "Force type classes by default, but accept configuration options based on FORCE_TYPE_CLASS env variable and :doma_type_class > :force_type_class configuration path."
+				# Force type classes by default, but accept configuration options based on FORCE_TYPE_CLASS env variable
+        # and :doma_type_class > :force_type_class configuration path.
 				high_prio = case System.get_env("FORCE_TYPE_CLASS") do
 					nil -> nil
 					"false" -> false

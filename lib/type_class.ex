@@ -141,19 +141,20 @@ defmodule TypeClass do
 
         use TypeClass.Dependency
 
-				# Force type classes by default, but accept configuration options based on FORCE_TYPE_CLASS env variable
+        # Force type classes by default
+        # accepts configuration options based on FORCE_TYPE_CLASS env variable
         # and :doma_type_class > :force_type_class configuration path.
-				high_prio = case System.get_env("FORCE_TYPE_CLASS") do
-					nil -> nil
-					"false" -> false
-					_ -> true
-				end
-				low_prio = Application.compile_env(:doma_type_class, :force_type_class, true) # Friendship ended with false, now true is my best friend
-				force_default_const = if is_nil(high_prio) do
-					if low_prio, do: true, else: false
-				else
-					high_prio
-				end
+        high_prio = case System.get_env("FORCE_TYPE_CLASS") do
+          nil -> nil
+          "false" -> false
+          _ -> true
+        end
+        # Friendship ended with false, now true is my best friend
+        force_default_const = if is_nil(high_prio) do
+          if Application.get_env(:doma_type_class, :force_type_class, true), do: true, else: false
+        else
+          high_prio
+        end
 
         Module.register_attribute(__MODULE__, :force_type_class, [])
         @force_type_class force_default_const
@@ -274,9 +275,9 @@ defmodule TypeClass do
         "false" -> false
         _ -> true
       end
-      low_prio = Application.compile_env(:doma_type_class, :nowarn_force_type_class, true)
+
       nowarn_force_default_const = if is_nil(high_prio) do
-        if low_prio, do: true, else: false
+        if Application.get_env(:doma_type_class, :force_type_class, true), do: true, else: false
       else
         high_prio
       end

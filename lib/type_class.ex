@@ -152,6 +152,8 @@ defmodule TypeClass do
         @doc false
         def __force_type_class__, do: @force_type_class
 
+        def __zero_proto__(_), do: nil
+
         TypeClass.run_where!()
         TypeClass.Dependency.run()
         TypeClass.Property.ensure!()
@@ -243,6 +245,9 @@ defmodule TypeClass do
         @doc false
         def __custom_generator__, do: false
         defoverridable __custom_generator__: 0
+
+        # Inject __phony__ implementation to prevent compile errors
+        def __phony__(_), do: nil
 
         unquote(body)
 
@@ -393,20 +398,47 @@ defmodule TypeClass do
 
   """
   defmacro where(do: fun_specs) do
+    # fun_specs |> IO.inspect(label: "where")
+    # {block, ctx, fun_specs_proper} = fun_specs
+    # phony_fun_spec = [{:__phony__, [], [{:__phony_arg__, [], nil}]}]
+    # fun_specs1 = {block, ctx, fun_specs_proper ++ phony_fun_spec}
     Module.put_attribute(__CALLER__.module, :class_methods, fun_specs)
+  end
+
+  # Add a __phony__ function to the protocol to prevent compile errors.
+  # We do it by adding it to the end of the list of functions, as seen here:
+  # fun_specs = {:__block__, [line: 51], [
+  #   {:def, [line: 51],
+  #     [
+  #       {:apply, [line: 51],
+  #        [{:morphism, [line: 51], nil}, {:arguments, [line: 51], nil}]}
+  #     ]},
+  #   {:def, [line: 34],
+  #     [
+  #       {:compose, [line: 34],
+  #        [{:morphism_a, [line: 34], nil}, {:morphism_b, [line: 34], nil}]}
+  #     ]},
+  # ]
+  def append_phony(fun_specs) do
+    phony_fun_spec = [{:def, [], [{:__phony__, [], [{:phony_arg, [], nil}]}]}]
+
+    case fun_specs do
+      nil -> {:__block__, [], phony_fun_spec}
+      {:__block__, ctx, funs} -> {:__block__, ctx, funs ++ phony_fun_spec}
+      fun = {:def, ctx, _inner} -> {:__block__, ctx, [fun] ++ phony_fun_spec}
+    end
   end
 
   defmacro run_where! do
     class = __CALLER__.module
-    fun_specs = Module.get_attribute(class, :class_methods)
+    # Make an anonymous function that adds two numbers and inspects the argument
+    fun_specs =
+      Module.get_attribute(class, :class_methods)
+      |> append_phony()
+
     proto = (Module.split(class) ++ ["Proto"]) |> Enum.map(&String.to_atom/1)
 
-    fun_stubs =
-      case fun_specs do
-        nil -> []
-        {:__block__, _ctx, funs} -> funs
-        fun = {:def, _ctx, _inner} -> [fun]
-      end
+    fun_stubs = fun_specs |> elem(2)
 
     delegates =
       fun_stubs
@@ -423,21 +455,25 @@ defmodule TypeClass do
           ast
       end)
 
-    quote do
-      defprotocol Proto do
-        @moduledoc ~s"""
-        Protocol for the `#{unquote(class)}` type class
+    full_module =
+      quote do
+        defprotocol Proto do
+          @moduledoc ~s"""
+          Protocol for the `#{unquote(class)}` type class
 
-        For this type class's API, please refer to `#{unquote(class)}`
-        """
+          For this type class's API, please refer to `#{unquote(class)}`
+          """
 
-        import TypeClass.Property.Generator.Custom
+          import TypeClass.Property.Generator.Custom
 
-        Macro.escape(unquote(fun_specs), unquote: true)
+          Macro.escape(unquote(fun_specs), unquote: true)
+        end
+
+        unquote(delegates)
+        # Delegate to phony function to make the protocol happy
       end
 
-      unquote(delegates)
-    end
+    full_module
   end
 
   @doc ~S"""

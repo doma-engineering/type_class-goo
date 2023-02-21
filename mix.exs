@@ -9,7 +9,7 @@ defmodule TypeClass.Mixfile do
       preferred_cli_env: [espec: :test, quality: :test],
 
       # Versions
-      version: "1.21.0",
+      version: "1.21.1",
       elixir: "~> 1.11",
 
       # Docs

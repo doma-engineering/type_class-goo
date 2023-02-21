@@ -398,10 +398,6 @@ defmodule TypeClass do
 
   """
   defmacro where(do: fun_specs) do
-    # fun_specs |> IO.inspect(label: "where")
-    # {block, ctx, fun_specs_proper} = fun_specs
-    # phony_fun_spec = [{:__phony__, [], [{:__phony_arg__, [], nil}]}]
-    # fun_specs1 = {block, ctx, fun_specs_proper ++ phony_fun_spec}
     Module.put_attribute(__CALLER__.module, :class_methods, fun_specs)
   end
 
@@ -419,7 +415,7 @@ defmodule TypeClass do
   #        [{:morphism_a, [line: 34], nil}, {:morphism_b, [line: 34], nil}]}
   #     ]},
   # ]
-  def append_phony(fun_specs) do
+  defp append_phony(fun_specs) do
     phony_fun_spec = [{:def, [], [{:__phony__, [], [{:phony_arg, [], nil}]}]}]
 
     case fun_specs do

@@ -12,7 +12,7 @@
             devShell.x86_64-linux =
                 pkgs.mkShell {
                     buildInputs = [
-                        pkgs.erlang
+                        pkgs.erlangR24
                         goo.defaultPackage.x86_64-linux
                     ];
                 };

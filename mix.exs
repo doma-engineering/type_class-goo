@@ -17,7 +17,8 @@ defmodule TypeClass.Mixfile do
       docs: docs(),
 
       # Hex
-      description: "(Semi-)principled type classes for Elixir that don't slow down compilation by dafault.",
+      description:
+        "(Semi-)principled type classes for Elixir that don't slow down compilation by dafault.",
       package: package()
     ]
   end

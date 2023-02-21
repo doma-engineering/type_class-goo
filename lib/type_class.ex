@@ -143,18 +143,21 @@ defmodule TypeClass do
 
         # Force type classes by default
         # accepts configuration options based on FORCE_TYPE_CLASS env variable
-        # and :doma_type_class > :force_type_class configuration path.
-        high_prio = case System.get_env("FORCE_TYPE_CLASS") do
-          nil -> nil
-          "false" -> false
-          _ -> true
-        end
+        # and :type_class_goo > :force_type_class configuration path.
+        high_prio =
+          case System.get_env("FORCE_TYPE_CLASS") do
+            nil -> nil
+            "false" -> false
+            _ -> true
+          end
+
         # Friendship ended with false, now true is my best friend
-        force_default_const = if is_nil(high_prio) do
-          if Application.get_env(:doma_type_class, :force_type_class, true), do: true, else: false
-        else
-          high_prio
-        end
+        force_default_const =
+          if is_nil(high_prio) do
+            Application.compile_env(:type_class_goo, :force_type_class, true)
+          else
+            high_prio
+          end
 
         Module.register_attribute(__MODULE__, :force_type_class, [])
         @force_type_class force_default_const
@@ -241,6 +244,20 @@ defmodule TypeClass do
     # __MODULE__ == TypeClass
     [for: datatype] = opts
 
+    high_prio =
+      case System.get_env("NOWARN_FORCED_TYPE_CLASS") do
+        nil -> nil
+        "false" -> false
+        _ -> true
+      end
+
+    nowarn_force_default_const =
+      if is_nil(high_prio) do
+        Application.get_env(:type_class_goo, :force_type_class, true)
+      else
+        high_prio
+      end
+
     quote do
       instance = Module.concat([unquote(class), Proto, unquote(datatype)])
 
@@ -270,26 +287,14 @@ defmodule TypeClass do
         def __force_type_instance__, do: @force_type_instance
       end
 
-      high_prio = case System.get_env("NOWARN_FORCED_TYPE_CLASS") do
-        nil -> nil
-        "false" -> false
-        _ -> true
-      end
-
-      nowarn_force_default_const = if is_nil(high_prio) do
-        if Application.get_env(:doma_type_class, :force_type_class, true), do: true, else: false
-      else
-        high_prio
-      end
-
       cond do
         unquote(class).__force_type_class__() ->
-          unless nowarn_force_default_const do
+          unless unquote(nowarn_force_default_const) do
             IO.warn("""
             The type class #{unquote(class)} has been forced to bypass \
             all property checks for all data types. This is very rarely valid, \
             as all type classes should have properties associted with them.
-  
+
             For more, please see the TypeClass README:
             https://github.com/expede/type_class/blob/master/README.md
             """)
@@ -298,17 +303,17 @@ defmodule TypeClass do
           :ok
 
         instance.__force_type_instance__() ->
-          unless nowarn_force_default_const do
+          unless unquote(nowarn_force_default_const) do
             IO.warn("""
             The data type #{unquote(datatype)} has been forced to skip property \
             validation for the type class #{unquote(class)}
-  
+
             This is sometimes valid, since TypeClass's property checker \
             may not be able to accurately validate all data types correctly for \
             all possible cases. Forcing a type instance in this way is like telling \
             the checker "trust me this is correct", and should only be used as \
             a last resort.
-  
+
             For more, please see the TypeClass README:
             https://github.com/expede/type_class/blob/master/README.md
             """)

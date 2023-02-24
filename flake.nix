@@ -1,9 +1,10 @@
 {
     inputs = {
         nixpkgs.url = "github:NixOS/nixpkgs";
+        goo.url = "github:doma-engineering/goo";
     };
 
-    outputs = {self, nixpkgs}:
+    outputs = {self, nixpkgs, goo}:
         let pkgs = nixpkgs.legacyPackages.x86_64-linux;
         in {
             defaultPackage.x86_64-linux = pkgs.hello;
@@ -12,7 +13,7 @@
                 pkgs.mkShell {
                     buildInputs = [
                         pkgs.erlang
-                        pkgs.elixir_1_14
+                        goo.defaultPackage.x86_64-linux
                     ];
                 };
         };

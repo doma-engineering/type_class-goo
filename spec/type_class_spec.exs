@@ -34,8 +34,8 @@ defmodule TypeClassSpec do
 
   describe "dependencies" do
     defclass DependencyClass do
-      extend MyClass
-      extend MyOtherClass
+      extend(MyClass)
+      extend(MyOtherClass)
 
       def half(int), do: int / 2
 
@@ -63,7 +63,7 @@ defmodule TypeClassSpec do
       end
 
       defclass MoreProps do
-        extend Adder
+        extend(Adder)
 
         properties do
           def yep(a) do
@@ -79,7 +79,7 @@ defmodule TypeClassSpec do
         end
 
         # Test
-        definst MoreProps, for: Integer
+        definst(MoreProps, for: Integer)
       end
     end
   end
@@ -137,7 +137,7 @@ defmodule TypeClassSpec do
     end
 
     defclass Monoid do
-      extend Semigroup
+      extend(Semigroup)
 
       where do
         def empty(sample)
@@ -173,7 +173,7 @@ defmodule TypeClassSpec do
     end
 
     defclass Apply do
-      extend FunctorTwo
+      extend(FunctorTwo)
 
       where do
         def ap(collection, fun)
@@ -185,7 +185,7 @@ defmodule TypeClassSpec do
     end
 
     defclass Applicative do
-      extend Apply
+      extend(Apply)
 
       where do
         def of(val, ex)
@@ -197,7 +197,7 @@ defmodule TypeClassSpec do
     end
 
     defclass Chain do
-      extend Apply
+      extend(Apply)
 
       where do
         def chain(wrapped, chaining_fun)
@@ -209,8 +209,8 @@ defmodule TypeClassSpec do
     end
 
     defclass Monad do
-      extend Applicative
-      extend Chain
+      extend(Applicative)
+      extend(Chain)
 
       properties do
         def foo(_), do: true
@@ -283,4 +283,32 @@ defmodule TypeClassSpec do
       def second({_a, b}), do: b
     end
   end
+
+  describe "type class with default implementation is overridable" do
+    definst MyClass, for: TypeClass.Utility.Helper do
+      def plus_five(x), do: x.value + 5
+    end
+
+    # If the default implementation makes sense, we can skip do block
+    definst MyClass, for: Float
+  end
+
+  describe "users of extended type class can just define the methods" do
+    ## definst MyClass, for: TypeClass.Utility.Helper
+    definst MyOtherClass, for: TypeClass.Utility.Helper
+    definst DependencyClass, for: TypeClass.Utility.Helper do
+      def plus_five(x), do: x.value + 6
+      def plus_ten(x), do: x.value + 12
+      def half(x), do: x.value / 2
+      def unnecessary(x), do: x.value
+    end
+
+    it "overrides correctly" do
+      require MyClass
+      import MyClass
+
+      expect(plus_five(%TypeClass.Utility.Helper{value: 5})) |> to(eql(11))
+    end
+  end
+
 end

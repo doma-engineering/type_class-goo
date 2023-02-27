@@ -133,6 +133,8 @@ defmodule TypeClass do
   """
   defmacro defclass(class_name, do: body) do
     quote do
+      IO.puts("#{inspect(unquote(class_name))} is being defined")
+
       defmodule unquote(class_name) do
         import TypeClass.Property.Generator, only: [generate: 1]
         import TypeClass.Property.Generator.Custom
@@ -223,10 +225,33 @@ defmodule TypeClass do
       end
   """
   defmacro definst(class, opts, do: body) do
+    # All the variables are quoted here.
+
+    IO.inspect("========== PHASE 3 #{inspect(class)} } ==========")
+
     # __MODULE__ == TypeClass
     [for: datatype] = opts
 
+    # 1. For lean-like type class definitions, walk the body and collect all the defined functions.
+    # local_functions = 
+    Macro.prewalk(body, fn
+      x ->
+        IO.inspect(x)
+    end)
+
     quote do
+      IO.inspect("========== PHASE 4 #{inspect(unquote(class).__dependencies__)}")
+
+      # 2. For each function in the dependency graph on depth 1
+      # dependency_to_function_mapping =
+      Enum.map(unquote(class).__dependencies__(), fn x ->
+        # 3. Collect the functions that are required to be provided by the instance for this dependency
+        x.module_info() |> Keyword.get(:exports) |> IO.inspect(label: "PHASE 4 :::::")
+      end)
+
+      # 4. Determine which buckets in the mapping are full.
+      # 5. If a bucket is full, define an instance using the functions from local_functions.
+
       instance = Module.concat([unquote(class), Proto, unquote(datatype)])
 
       # __MODULE__ == datatype
@@ -368,16 +393,22 @@ defmodule TypeClass do
 
   """
   defmacro definst(class, for: datatype) do
+    IO.inspect("========== PHASE 1 ==========")
+
     quote do
       definst unquote(class), for: unquote(datatype) do
+        IO.inspect("========== PHASE 1 CALLBACK ==========")
         # Intentionally blank; hooking into definst magic
       end
     end
   end
 
   defmacro definst(class, do: body) do
+    IO.inspect("========== PHASE 2 ==========")
+
     quote do
       definst unquote(class), for: __MODULE__ do
+        IO.inspect("========== PHASE 2 CALLBACK ==========")
         unquote(body)
       end
     end

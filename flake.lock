@@ -20,11 +20,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1677537249,
-        "narHash": "sha256-uiBuRuM4fmBUJXKyb2nSdi6LSovC/bLVSp8InOe4xhk=",
+        "lastModified": 1677560668,
+        "narHash": "sha256-DK/wo/1cKipSiGcq/sW4QtqUfVlsWJdJM0n7PIp+IPY=",
         "owner": "doma-engineering",
         "repo": "goo",
-        "rev": "29bcdde0eeb61acb76d978ead65c92290eee509d",
+        "rev": "c998007b20c37db5bf59e8ba85dddc30804155bf",
         "type": "github"
       },
       "original": {

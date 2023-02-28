@@ -278,8 +278,8 @@ defmodule TypeClass do
         def __custom_generator__, do: false
         defoverridable __custom_generator__: 0
 
-        # Inject __phony__ implementation to prevent compile errors
-        def __phony__(_), do: nil
+        ## Inject __phony__ implementation to prevent compile errors
+        #def __phony__(_), do: nil
 
         unquote(body)
 
@@ -441,40 +441,46 @@ defmodule TypeClass do
     Module.put_attribute(__CALLER__.module, :class_methods, fun_specs)
   end
 
-  # Add a __phony__ function to the protocol to prevent compile errors.
-  # We do it by adding it to the end of the list of functions, as seen here:
-  # fun_specs = {:__block__, [line: 51], [
-  #   {:def, [line: 51],
-  #     [
-  #       {:apply, [line: 51],
-  #        [{:morphism, [line: 51], nil}, {:arguments, [line: 51], nil}]}
-  #     ]},
-  #   {:def, [line: 34],
-  #     [
-  #       {:compose, [line: 34],
-  #        [{:morphism_a, [line: 34], nil}, {:morphism_b, [line: 34], nil}]}
-  #     ]},
-  # ]
-  defp append_phony(fun_specs) do
-    phony_fun_spec = [{:def, [], [{:__phony__, [], [{:phony_arg, [], nil}]}]}]
-
-    case fun_specs do
-      nil -> {:__block__, [], phony_fun_spec}
-      {:__block__, ctx, funs} -> {:__block__, ctx, funs ++ phony_fun_spec}
-      fun = {:def, ctx, _inner} -> {:__block__, ctx, [fun] ++ phony_fun_spec}
-    end
-  end
+#  # Add a __phony__ function to the protocol to prevent compile errors.
+#  # We do it by adding it to the end of the list of functions, as seen here:
+#  # fun_specs = {:__block__, [line: 51], [
+#  #   {:def, [line: 51],
+#  #     [
+#  #       {:apply, [line: 51],
+#  #        [{:morphism, [line: 51], nil}, {:arguments, [line: 51], nil}]}
+#  #     ]},
+#  #   {:def, [line: 34],
+#  #     [
+#  #       {:compose, [line: 34],
+#  #        [{:morphism_a, [line: 34], nil}, {:morphism_b, [line: 34], nil}]}
+#  #     ]},
+#  # ]
+#  defp append_phony(fun_specs) do
+#    phony_fun_spec = [{:def, [], [{:__phony__, [], [{:phony_arg, [], nil}]}]}]
+#
+#    case fun_specs do
+#      nil -> {:__block__, [], phony_fun_spec}
+#      {:__block__, ctx, funs} -> {:__block__, ctx, funs ++ phony_fun_spec}
+#      fun = {:def, ctx, _inner} -> {:__block__, ctx, [fun] ++ phony_fun_spec}
+#    end
+#  end
 
   defmacro run_where! do
     class = __CALLER__.module
     # Make an anonymous function that adds two numbers and inspects the argument
     fun_specs =
       Module.get_attribute(class, :class_methods)
-      |> append_phony()
+#      |> append_phony()
 
     proto = (Module.split(class) ++ ["Proto"]) |> Enum.map(&String.to_atom/1)
 
-    fun_stubs = fun_specs |> elem(2)
+#    fun_stubs = fun_specs |> elem(2)
+    fun_stubs =
+      case fun_specs do
+        nil -> []
+        {:__block__, _ctx, funs} -> funs
+        fun = {:def, _ctx, _inner} -> [fun]
+      end
 
     delegates =
       fun_stubs
